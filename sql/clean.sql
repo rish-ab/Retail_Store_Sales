@@ -266,7 +266,8 @@ SELECT
         WHEN UPPER(TRIM(d.payment_method)) = 'CREDIT CARD' THEN 'Credit Card'
         WHEN UPPER(REPLACE(TRIM(d.payment_method), ' ', '')) = 'DEBITCARD' THEN 'Debit Card'
         WHEN UPPER(TRIM(d.payment_method)) = 'PAYPAL' THEN 'PayPal'
-        ELSE NULL
+        WHEN d.payment_method IS NULL THEN 'Unknown'
+        ELSE INITCAP(TRIM(d.payment_method))
     END                                             AS payment_method,
     INITCAP(TRIM(d.order_status))                  AS order_status,
     INITCAP(TRIM(d.shipping_method))               AS shipping_method,
@@ -549,9 +550,10 @@ FROM sales_clean
 WHERE customer_name IS NULL OR region IS NULL OR product_category IS NULL
    OR payment_method IS NULL OR order_status IS NULL;
 
--- Quick look at what changed financially
+-- Quick look at what changed financially (compare the SAME 65 rows on
+-- both sides — summing the whole table on one side was the earlier bug)
 SELECT COUNT(*) AS rows_changed,
-       ROUND(SUM(sales_amount) - (SELECT SUM(sales_amount_raw) FROM stg_financial), 2) AS net_revenue_impact
+       ROUND(SUM(sc.sales_amount) - SUM(sf.sales_amount_raw), 2) AS net_revenue_impact
 FROM sales_clean sc
 JOIN stg_financial sf ON sf.transaction_id = sc.transaction_id
 WHERE sc.sales_amount <> sf.sales_amount_raw;
