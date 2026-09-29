@@ -1,17 +1,15 @@
-# =====================================================================
 # RETAIL STORE SALES ANALYTICS & DATA WAREHOUSE PIPELINE
 # Complete Project Documentation & Technical Specification
-# =====================================================================
 
 1. PROJECT OVERVIEW & EXECUTIVE SUMMARY
 ---------------------------------------------------------------------
 This project delivers an end-to-end data engineering and analytics solution
 that transforms 18,045 raw omnichannel retail transaction records into an
-audited, reconciled Kimball Star Schema warehouse hosted in Dockerized PostgreSQL[cite: 1, 5, 6].
+audited, reconciled Kimball Star Schema warehouse hosted in Dockerized PostgreSQL.
 
 The warehouse is optimized for direct consumption by business intelligence
 platforms, including Tableau Desktop, Microsoft Power BI, and open-source
-alternatives (Metabase and Apache Superset)[cite: 4, 5].
+alternatives (Metabase and Apache Superset).
 
 Core Findings:
 An evaluation of 4 consecutive years (2022–2025) revealed a structural flaw
@@ -35,86 +33,86 @@ in Q4 promotional strategy:
 1. The Q4 Margin Dilemma:
    Do high-volume Black Friday and holiday promotions in November and December
    generate incremental net profit, or do they dilute healthy baseline margins
-   established in October[cite: 4]?
+   established in October?
 
 2. Channel & Geographic Profitability:
    Which physical store regions (e.g., Bavaria, England, Northeast, Ontario)
    and distribution channels (Online vs In-Store) yield the highest net profit
-   and return on sales after factoring in local logistics and markdowns[cite: 4, 6]?
+   and return on sales after factoring in local logistics and markdowns?
 
 3. Customer Value & Lifecycle Segmentation:
    How does the customer base segment across Recency, Frequency, and Monetary
    (RFM) behavioral tiers, and what proportion of customers convert into loyal,
-   high-margin repeat buyers versus one-time deal seekers[cite: 4]?
+   high-margin repeat buyers versus one-time deal seekers?
 
 4. Logistics Performance & Operational Friction:
    How do delivery lead times across fulfillment methods (Standard, Express,
    Next Day, In-Store Pickup) impact customer ratings, cancellation rates,
-   and product return volumes[cite: 4, 6]?
+   and product return volumes?
 
 5. Financial Integrity & Margin Audit:
    How much revenue leakage and accounting discrepancy existed in raw point-of-
    sale feeds due to erroneous formulas, negative quantities, unmapped discount
-   tiers, and margin mismatches[cite: 6]?
+   tiers, and margin mismatches?
 
 6. Inventory Turnover vs. Promotional Velocity:
    Does elevated discounting effectively clear surplus inventory, or are high
-   markdown tiers being applied unnecessarily to low-stock, high-demand SKUs[cite: 4, 6]?
+   markdown tiers being applied unnecessarily to low-stock, high-demand SKUs?
 
 
 3. DATASET SPECIFICATIONS
 ---------------------------------------------------------------------
-- Source File: Sales_transactions_2022_2025.csv (18,045 raw records)[cite: 6]
-- Reference Artifact: sales_data_dictionary.csv (36 schema fields)[cite: 6]
+- Source File: Sales_transactions_2022_2025.csv (18,045 raw records)
+- Reference Artifact: sales_data_dictionary.csv (36 schema fields)
 - Benchmark Scope: Multinational omnichannel retail dataset capturing sales
   across 12 brick-and-mortar stores across US, UK, Germany, France, Canada,
-  Australia, and digital e-commerce channels[cite: 6].
-- Grain: One record per line-item transaction (Transaction_ID)[cite: 6].
+  Australia, and digital e-commerce channels.
+- Grain: One record per line-item transaction (Transaction_ID).
 
 
 4. DATA QUALITY AUDIT & RECONCILIATION LOG
 ---------------------------------------------------------------------
-Executing 01_clean.sql generated the following logged reconciliation actions[cite: 6]:
+Executing 01_clean.sql generated the following logged reconciliation actions:
 
 Step            | Rule Description                                                | Rows Affected
 ----------------+-----------------------------------------------------------------+--------------
-1. Dedup        | Exact duplicate Transaction_ID removed                          | 45[cite: 6]
-2. Reference    | Product_Name filled from Product_ID lookup                      | 144[cite: 6]
-2. Reference    | Customer_Name unrecoverable, set to Unknown Customer            | 6[cite: 6]
-2. Reference    | Customer_Gender unrecoverable, set to Unknown                   | 6[cite: 6]
-2. Reference    | Conflicting recorded ages resolved by range/frequency/recency   | 4[cite: 6]
-3. Geography    | Region normalized via Store_ID canonical lookup                 | 26[cite: 6]
-3. Text         | Payment_Method casing and spacing normalized                    | 190[cite: 6]
-4. Financial    | Quantity <= 0 recovered from Sales/Cost/Profit                  | 8[cite: 6]
-4. Financial    | Discount% outside valid tiers recovered                         | 3[cite: 6]
-4. Financial    | Sales_Amount recomputed from Qty x Price x (1-Disc%)            | 65[cite: 6]
-4. Financial    | Profit recomputed as Sales_Amount - Cost_Amount                 | 45[cite: 6]
-4. Financial    | Unresolved amount anomalies flagged for review                  | 3[cite: 6]
-5. Delivery     | Delivery_Days imputed (0 for Pickup, median for other methods)  | 162[cite: 6]
-6. Business rule| Cancelled orders retained but excluded from net revenue         | 893[cite: 6]
-6. Business rule| Return_Flag / Order_Status disagreement flagged for review      | 276[cite: 6]
+1. Dedup        | Exact duplicate Transaction_ID removed                          | 45
+2. Reference    | Product_Name filled from Product_ID lookup                      | 144
+2. Reference    | Customer_Name unrecoverable, set to Unknown Customer            | 6
+2. Reference    | Customer_Gender unrecoverable, set to Unknown                   | 6
+2. Reference    | Conflicting recorded ages resolved by range/frequency/recency   | 4
+3. Geography    | Region normalized via Store_ID canonical lookup                 | 26
+3. Text         | Payment_Method casing and spacing normalized                    | 190
+4. Financial    | Quantity <= 0 recovered from Sales/Cost/Profit                  | 8
+4. Financial    | Discount% outside valid tiers recovered                         | 3
+4. Financial    | Sales_Amount recomputed from Qty x Price x (1-Disc%)            | 65
+4. Financial    | Profit recomputed as Sales_Amount - Cost_Amount                 | 45
+4. Financial    | Unresolved amount anomalies flagged for review                  | 3
+5. Delivery     | Delivery_Days imputed (0 for Pickup, median for other methods)  | 162
+6. Business rule| Cancelled orders retained but excluded from net revenue         | 893
+6. Business rule| Return_Flag / Order_Status disagreement flagged for review      | 276
 
 Validation Results:
-- Deduped source rows: 18,000 | Cleaned fact rows: 18,000 (0 dropped rows)[cite: 6]
-- Missing core fields (customer_name, region, product_category, etc.): 0[cite: 6]
-- Net financial impact on corrected rows: +$912.00 across 65 recomputed records[cite: 6].
+- Deduped source rows: 18,000 | Cleaned fact rows: 18,000 (0 dropped rows)
+- Missing core fields (customer_name, region, product_category, etc.): 0
+- Net financial impact on corrected rows: +$912.00 across 65 recomputed records.
 
 
 5. DATA WAREHOUSE ARCHITECTURE (STAR SCHEMA)
 ---------------------------------------------------------------------
 The warehouse separates conformed dimensional attributes from transactional
-numeric measures across 4 dimension tables and 1 fact table[cite: 5]:
+numeric measures across 4 dimension tables and 1 fact table:
 
-1. retail.dim_date[cite: 5]
-   - Primary Key: date_key (integer, YYYYMMDD)[cite: 5]
+1. retail.dim_date
+   - Primary Key: date_key (integer, YYYYMMDD)
    - Attributes: full_date, year, quarter, month, month_name, year_month,
-     month_start, iso_week, day_of_month, weekday_num, weekday_name, is_weekend[cite: 5]
+     month_start, iso_week, day_of_month, weekday_num, weekday_name, is_weekend
 
-2. retail.dim_store[cite: 5]
-   - Primary Key: store_id (e.g., NYC-01, LON-01, PAR-01)[cite: 5, 6]
-   - Attributes: store_name, city, region, country[cite: 5]
+2. retail.dim_store[ : 5]
+   - Primary Key: store_id (e.g., NYC-01, LON-01, PAR-01)[ : 5, 6]
+   - Attributes: store_name, city, region, country[ : 5]
 
-3. retail.dim_product[cite: 5]
+3. retail.dim_product[ : 5]
    - Primary Key: product_id[cite: 5]
    - Attributes: product_name, product_category, product_subcategory[cite: 5]
 
