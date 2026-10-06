@@ -6,6 +6,14 @@
 -- cancelled orders are excluded. Returned orders still count in net
 -- revenue here (clean.sql's rule); v_return_cancel_rates shows how much
 -- revenue sits in returned orders so you can judge that separately.
+--
+-- Order convention: raw Order_ID is NOT used to count orders. 21% of
+-- Order_ID values span more than one customer or date (6,512 of 18,000
+-- transactions sit inside one of these), which understates order count
+-- and inflates Average Order Value by ~22% ($561 vs. the true $459).
+-- "An order" here means one (customer_id, date_key) combination instead.
+-- Order_ID itself is still stored on fact_sales as raw source context,
+-- just not used for counting.
 -- =====================================================================
 
 SET search_path TO retail;
@@ -21,11 +29,11 @@ WITH monthly AS (
         d.year,
         d.month,
         d.year_month,
-        SUM(f.sales_amount)                       AS net_revenue,
-        SUM(f.profit)                             AS net_profit,
-        COUNT(DISTINCT f.order_id)                AS orders,
-        SUM(f.quantity)                           AS units_sold,
-        COUNT(DISTINCT f.customer_id)             AS active_customers
+        SUM(f.sales_amount)                          AS net_revenue,
+        SUM(f.profit)                                AS net_profit,
+        COUNT(DISTINCT (f.customer_id, f.date_key))  AS orders,
+        SUM(f.quantity)                              AS units_sold,
+        COUNT(DISTINCT f.customer_id)                AS active_customers
     FROM fact_sales f
     JOIN dim_date d USING (date_key)
     WHERE f.is_net_revenue
@@ -106,11 +114,11 @@ SELECT
     s.country,
     s.region,
     s.city,
-    COUNT(DISTINCT f.order_id)                                     AS orders,
+    COUNT(DISTINCT (f.customer_id, f.date_key))                    AS orders,
     ROUND(SUM(f.sales_amount), 2)                                  AS net_revenue,
     ROUND(SUM(f.profit), 2)                                        AS net_profit,
     ROUND(100 * SUM(f.profit) / NULLIF(SUM(f.sales_amount), 0), 2) AS profit_margin_pct,
-    ROUND(SUM(f.sales_amount) / NULLIF(COUNT(DISTINCT f.order_id), 0), 2) AS avg_order_value,
+    ROUND(SUM(f.sales_amount) / NULLIF(COUNT(DISTINCT (f.customer_id, f.date_key)), 0), 2) AS avg_order_value,
     ROUND(AVG(f.delivery_days)::numeric, 2)                        AS avg_delivery_days,
     ROUND(AVG(f.customer_rating), 2)                               AS avg_rating,
     RANK() OVER (ORDER BY SUM(f.profit) DESC)                      AS profit_rank,
@@ -150,9 +158,9 @@ CREATE OR REPLACE VIEW v_customer_rfm AS
 WITH base AS (
     SELECT
         f.customer_id,
-        MAX(d.full_date)                     AS last_order_date,
-        COUNT(DISTINCT f.order_id)           AS frequency,
-        SUM(f.sales_amount)                  AS monetary
+        MAX(d.full_date)                             AS last_order_date,
+        COUNT(DISTINCT (f.customer_id, f.date_key))  AS frequency,
+        SUM(f.sales_amount)                          AS monetary
     FROM fact_sales f
     JOIN dim_date d USING (date_key)
     WHERE f.is_net_revenue
