@@ -74,7 +74,7 @@ CREATE TABLE stg_sales_raw (
 
 -- Path below matches the docker-compose volume mount ./data:/data:ro,
 -- so this runs as-is once the container is up (see docker-compose.yaml).
-\copy retail.stg_sales_raw FROM '/data/Sales_transactions_2022_2025.csv' WITH (FORMAT csv, HEADER true);
+\copy retail.stg_sales_raw FROM 'C:\Users\stude\Documents\Project 1\Retail_Store_Sales\data\Sales_transactions_2022_2025.csv' WITH (FORMAT csv, HEADER true);
 
 -- MySQL:
 --   LOAD DATA LOCAL INFILE 'Sales_transactions_2022_2025.csv' INTO TABLE retail.stg_sales_raw
